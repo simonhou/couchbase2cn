@@ -20,15 +20,33 @@ Couchbase Server 是一款面向互联网应用的文档型数据库。它具有
 Couchbase Server拥有的这些特性使它可以支持终端用户需求低延迟和高吞吐的网络应用。网络应用可以在Couchbase集群内快速获取数据，开发者可以增加服务器以扩展应用。
 
 # Couchbase安装
-目前最新版本的Couchbase版本为4.6，而我公司使用版本为4.1。
+目前最新版本的Couchbase版本为4.6，可以按照需要选择3.x或者4.x或者5.0 Preview版本。
 ## 创建cluster
-参考以下命令获取安装包和安装脚本，详细步骤参考安装手册。
+下载好所需版本后，参考以下命令进行参数设置和安装。
 ```shell
-get couchbase-server-enterprise-4.1.0-centos6.x86_64.rpm
-get couchbase_setup.sh
-mv couchbase-server-enterprise-4.1.0-centos6.x86_64.rpm
- /ztsoft/usr/sysusr/
-sh couchbase_setup.sh
+#!/bin/bash
+
+groupadd -g 1234 couchbase
+useradd -m -d /opt/couchbase -s /sbin/nologin -c "Couchbase system user" -u 1234 -g couchbase couchbase
+
+echo "for i in /sys/kernel/mm/*transparent_hugepage/enabled; do echo never > $i; done" >> /etc/rc.local
+echo "for i in /sys/kernel/mm/*transparent_hugepage/defrag; do echo never > $i; done" >> /etc/rc.local
+
+for i in /sys/kernel/mm/*transparent_hugepage/enabled; do echo never > $i; done
+for i in /sys/kernel/mm/*transparent_hugepage/defrag; do echo never > $i; done
+
+echo "vm.swappiness = 0" >> /etc/sysctl.conf
+echo "vm.dirty_bytes = 209715200" >> /etc/sysctl.conf
+echo "vm.dirty_background_bytes = 104857600" >> /etc/sysctl.conf
+echo "vm.dirty_expire_centisecs = 300" >> /etc/sysctl.conf
+echo "vm.dirty_writeback_centisecs = 100" >> /etc/sysctl.conf
+echo "vm.zone_reclaim_mode = 0" >> /etc/sysctl.conf
+sysctl -p
+
+yum install -y /root/couchbase-server-enterprise-4.6.2-centos6.x86_64.rpm
+
+mkdir /ztapp/couchbase_data
+chown -R couchbase:couchbase /ztapp/couchbase_data
 ```
 
 浏览器登录 http://IP:8091 ，弹出如下界面。IP使用上一步安装节点的ip地址。
@@ -36,7 +54,7 @@ sh couchbase_setup.sh
 ![Alt text](./images/1.jpg)
 
 点击**Setup**
-![Alt text](./images/2.jpg "配置")
+![Alt text](./images/2-2.jpg "配置")
 
 指定data和index存储路径，以及server hostname。然后就开始创建bucket。
 ## 创建bucket
@@ -54,7 +72,7 @@ sh couchbase_setup.sh
 ## 加入cluster
 Couchbase用于创建集群时，还需要添加其它节点到集群中。
 浏览器登录待加入节点的管理 http://IP:8091
-![Alt text](./images/7.jpg)
+![Alt text](./images/7-7.jpg)
 
 需要注意**Join a cluster now**选项。
 
@@ -66,16 +84,16 @@ Couchbase用于创建集群时，还需要添加其它节点到集群中。
 
 ![Alt text](./images/11.jpg)
 #### rebalance
-![Alt text](./images/12.jpg)
+![Alt text](./images/12-1.jpg)
 
-![Alt text](./images/13.jpg)
+![Alt text](./images/13-1.jpg)
 
 #### 创建bucket
 ![Alt text](./images/14.jpg)
 
-![Alt text](./images/15.jpg)
+![Alt text](./images/15-1.jpg)
 
-![Alt text](./images/16.jpg)
+![Alt text](./images/16-1.jpg)
 
 ## 其他配置操作
 #### 设置集群名字
@@ -83,19 +101,19 @@ Couchbase用于创建集群时，还需要添加其它节点到集群中。
 #### 设置failover
 ![Alt text](./images/18.jpg)
 #### 设置告警
-![Alt text](./images/19.jpg)
-在alerts页面配置host为10.40.34.201，port为25，Sender email:couchbase@ect888.com，Recipients:couchbase@ect888.com
+![Alt text](./images/19-1.jpg)
+在alerts页面配置host IP，port为25，Sender email任写。
 #### 设置只读用户
 ![Alt text](./images/20.jpg)
 
 #### 配置XDCR
 ![Alt text](./images/21.jpg)
 
-![Alt text](./images/22.jpg)
+![Alt text](./images/22-1.jpg)
 
-![Alt text](./images/23.jpg)
+![Alt text](./images/23-1.jpg)
 
-![Alt text](./images/24.jpg)
+![Alt text](./images/24-1.jpg)
 
 # 基本概念
 Couchbase服务器可以单独运行，也可以作为集群运行。在Couchbase集群里，运行一个或多个Couchbase实例。集群里所有节点是平等的，提供相同的功能和信息，没有层次结构的概念，也没有主节点、从节点之分。整个集群共享每个独立节点的信息，每个节点负责对数据的一部分进行响应。
